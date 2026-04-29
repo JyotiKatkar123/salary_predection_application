@@ -1,7 +1,8 @@
 import streamlit as st
-import pickle
 import pandas as pd
 import numpy as np
+import pickle
+import sklearn  # Add this to force-check if it's installed
 
 # Set up the page
 st.set_page_config(page_title="Logistic Regression Predictor", layout="centered")
