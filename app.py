@@ -2,59 +2,50 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import pickle
-import sklearn  # Add this to force-check if it's installed
+import sklearn
 
-# Set up the page
-st.set_page_config(page_title="Logistic Regression Predictor", layout="centered")
+# Configuration
+st.set_page_config(page_title="Prediction App", layout="centered")
 st.title("Machine Learning Model Predictor")
-st.write("Enter the details below to get a prediction.")
 
 # Load the model
-# Ensure 'model (5).pkl' is in the same directory as this script
 @st.cache_resource
 def load_model():
-    with open('model (5).pkl', 'rb') as file:
-        model = pickle.load(file)
-    return model
+    # Ensure the filename here matches your GitHub filename exactly
+    with open('model.pkl', 'rb') as file:
+        return pickle.load(file)
 
 try:
     model = load_model()
+    st.success("Model loaded successfully!")
 
-    # Create input fields based on model features: 
-    # Age, Gender, Region, Occupation, Income
     st.header("Input Features")
     
-    age = st.number_input("Age", min_value=0, max_value=120, value=30)
-    
-    # Note: Since the model expects 5 features, categorical inputs 
-    # (Gender, Region, Occupation) must be provided in the numerical 
-    # format the model was trained on (e.g., 0 or 1).
-    gender = st.number_input("Gender (Numeric)", min_value=0, max_value=1, value=0, help="0 for Female, 1 for Male (depending on training)")
-    region = st.number_input("Region (Numeric Code)", min_value=0, value=0)
-    occupation = st.number_input("Occupation (Numeric Code)", min_value=0, value=0)
-    income = st.number_input("Income", min_value=0, value=50000)
+    # Input fields for the 5 required features
+    age = st.number_input("Age", min_value=1, max_value=120, value=25)
+    gender = st.selectbox("Gender", options=[0, 1], help="0 for Female, 1 for Male")
+    region = st.number_input("Region Code", min_value=0, value=0)
+    occupation = st.number_input("Occupation Code", min_value=0, value=0)
+    income = st.number_input("Income", min_value=0, value=30000)
 
-    # Create a button for prediction
     if st.button("Predict"):
-        # Arrange inputs into the format the model expects
-        input_data = pd.DataFrame([[age, gender, region, occupation, income]], 
-                                 columns=['Age', 'Gender', 'Region', 'Occupation', 'Income'])
+        # Create DataFrame with the exact feature names the model expects
+        features = pd.DataFrame([[age, gender, region, occupation, income]], 
+                               columns=['Age', 'Gender', 'Region', 'Occupation', 'Income'])
         
-        # Make prediction
-        prediction = model.predict(input_data)
-        prediction_proba = model.predict_proba(input_data)
+        prediction = model.predict(features)
+        probability = model.predict_proba(features)
 
-        # Display results
-        st.subheader("Result")
-        result_text = "Yes" if prediction[0] == "yes" else "No"
-        st.success(f"The predicted outcome is: **{result_text}**")
+        st.subheader("Prediction Result")
+        # Model classes from your file: ['no', 'yes']
+        st.write(f"The model predicts: **{prediction[0].upper()}**")
         
-        # Show probabilities
-        st.write("### Prediction Probability")
-        prob_df = pd.DataFrame(prediction_proba, columns=model.classes_)
+        # Display probability
+        prob_df = pd.DataFrame(probability, columns=model.classes_)
+        st.write("Confidence Level:")
         st.bar_chart(prob_df.T)
 
 except FileNotFoundError:
-    st.error("Error: 'model (5).pkl' not found. Please ensure the file is in the same directory.")
+    st.error("Error: 'model.pkl' not found. Check your GitHub file name.")
 except Exception as e:
-    st.error(f"An error occurred: {e}")
+    st.error(f"Error: {e}")
