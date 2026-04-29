@@ -1,52 +1,38 @@
 import streamlit as st
-import pandas as pd
+import numpy as np
 import pickle
 
-# Page config
-st.set_page_config(page_title="Salary Predictor", layout="centered")
+# Page setup
+st.set_page_config(page_title="Linear Regression Predictor", layout="centered")
 
-st.title("💰 Salary Prediction App")
+st.title("📈 Linear Regression Predictor")
+st.write("Enter a value to get prediction")
 
 # Load model
 @st.cache_resource
 def load_model():
     try:
         with open("model.pkl", "rb") as file:
-            model = pickle.load(file)
-        return model
+            return pickle.load(file)
     except Exception as e:
         st.error(f"Error loading model: {e}")
         return None
 
 model = load_model()
 
-# If model loaded
-if model is not None:
-    st.success("✅ Model loaded successfully!")
+# Input (single feature)
+input_value = st.number_input("Enter input value", value=0.0)
 
-    st.subheader("Enter Input Data")
-
-    # Inputs
-    age = st.number_input("Age", min_value=18, max_value=100, value=30)
-    gender = st.selectbox("Gender", [0, 1])  # 0 = Female, 1 = Male (example)
-    region = st.number_input("Region", value=0)
-    occupation = st.number_input("Occupation", value=0)
-    income = st.number_input("Income", value=50000)
-
-    # Prediction button
-    if st.button("Predict"):
+# Predict button
+if st.button("Predict"):
+    if model is not None:
         try:
-            input_data = pd.DataFrame(
-                [[age, gender, region, occupation, income]],
-                columns=['Age', 'Gender', 'Region', 'Occupation', 'Income']
-            )
-
+            input_data = np.array([[input_value]])  # 2D array required
             prediction = model.predict(input_data)
 
             st.success(f"🎯 Prediction: {prediction[0]}")
 
         except Exception as e:
             st.error(f"Prediction error: {e}")
-
-else:
-    st.warning("⚠️ Model not loaded. Please check model.pkl file.")
+    else:
+        st.warning("Model not loaded!")
