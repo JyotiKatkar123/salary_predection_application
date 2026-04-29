@@ -4,48 +4,63 @@ import numpy as np
 import pickle
 import sklearn
 
-# Configuration
-st.set_page_config(page_title="Prediction App", layout="centered")
-st.title("Machine Learning Model Predictor")
+# Page Setup
+st.set_page_config(page_title="Salary Prediction App", layout="centered")
+st.title("Machine Learning Prediction Portal")
 
-# Load the model
+# Load the model - using the exact name from your pkl content
 @st.cache_resource
 def load_model():
-    # Ensure the filename here matches your GitHub filename exactly
-    with open('model.pkl', 'rb') as file:
-        return pickle.load(file)
+    # Make sure your file on GitHub is named 'model.pkl'
+    try:
+        with open('model.pkl', 'rb') as file:
+            return pickle.load(file)
+    except FileNotFoundError:
+        return None
 
-try:
-    model = load_model()
-    st.success("Model loaded successfully!")
+model = load_model()
 
-    st.header("Input Features")
+if model is None:
+    st.error("⚠️ 'model.pkl' not found! Please rename your .pkl file to 'model.pkl' on GitHub.")
+else:
+    st.success("✅ Model loaded successfully!")
+
+    st.header("Enter Details for Prediction")
     
-    # Input fields for the 5 required features
-    age = st.number_input("Age", min_value=1, max_value=120, value=25)
-    gender = st.selectbox("Gender", options=[0, 1], help="0 for Female, 1 for Male")
-    region = st.number_input("Region Code", min_value=0, value=0)
-    occupation = st.number_input("Occupation Code", min_value=0, value=0)
-    income = st.number_input("Income", min_value=0, value=30000)
-
-    if st.button("Predict"):
-        # Create DataFrame with the exact feature names the model expects
-        features = pd.DataFrame([[age, gender, region, occupation, income]], 
-                               columns=['Age', 'Gender', 'Region', 'Occupation', 'Income'])
+    # These inputs match the 'feature_names_in_' found in your pkl file
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        age = st.number_input("Age", min_value=18, max_value=100, value=30)
+        gender = st.number_input("Gender (0 for Female, 1 for Male)", min_value=0, max_value=1, value=0)
+        region = st.number_input("Region Code", min_value=0, step=1)
         
-        prediction = model.predict(features)
-        probability = model.predict_proba(features)
+    with col2:
+        occupation = st.number_input("Occupation Code", min_value=0, step=1)
+        income = st.number_input("Income", min_value=0, step=1000, value=50000)
 
-        st.subheader("Prediction Result")
-        # Model classes from your file: ['no', 'yes']
-        st.write(f"The model predicts: **{prediction[0].upper()}**")
+    if st.button("Generate Prediction"):
+        # Create DataFrame with exact column names from your model data
+        input_df = pd.DataFrame(
+            [[age, gender, region, occupation, income]], 
+            columns=['Age', 'Gender', 'Region', 'Occupation', 'Income']
+        )
         
-        # Display probability
-        prob_df = pd.DataFrame(probability, columns=model.classes_)
-        st.write("Confidence Level:")
-        st.bar_chart(prob_df.T)
+        try:
+            prediction = model.predict(input_df)
+            prediction_prob = model.predict_proba(input_df)
 
-except FileNotFoundError:
-    st.error("Error: 'model.pkl' not found. Check your GitHub file name.")
-except Exception as e:
-    st.error(f"Error: {e}")
+            st.markdown("---")
+            st.subheader("Results")
+            
+            # The classes in your model are 'no' and 'yes'
+            result = "Positive (Yes)" if prediction[0] == "yes" else "Negative (No)"
+            st.metric(label="Prediction Result", value=result)
+            
+            # Show probability bar chart
+            st.write("### Prediction Probability")
+            prob_data = pd.DataFrame(prediction_prob, columns=model.classes_)
+            st.bar_chart(prob_data.T)
+            
+        except Exception as e:
+            st.error(f"Prediction Error: {e}")
