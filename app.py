@@ -1,12 +1,10 @@
 import streamlit as st
-import numpy as np
+import pandas as pd
 import pickle
 
-# Page setup
-st.set_page_config(page_title="Linear Regression Predictor", layout="centered")
+st.set_page_config(page_title="Prediction App", layout="centered")
 
-st.title("📈 Linear Regression Predictor")
-st.write("Enter a value to get prediction")
+st.title("📊 ML Prediction App")
 
 # Load model
 @st.cache_resource
@@ -20,19 +18,31 @@ def load_model():
 
 model = load_model()
 
-# Input (single feature)
-input_value = st.number_input("Enter input value", value=0.0)
+if model is not None:
+    st.success("✅ Model loaded!")
 
-# Predict button
-if st.button("Predict"):
-    if model is not None:
+    st.subheader("Enter Input Values")
+
+    # 👇 5 inputs (must match training)
+    age = st.number_input("Age", value=30)
+    gender = st.selectbox("Gender (0=Female, 1=Male)", [0, 1])
+    region = st.number_input("Region", value=0)
+    occupation = st.number_input("Occupation", value=0)
+    income = st.number_input("Income", value=50000)
+
+    if st.button("Predict"):
         try:
-            input_data = np.array([[input_value]])  # 2D array required
+            input_data = pd.DataFrame(
+                [[age, gender, region, occupation, income]],
+                columns=['Age', 'Gender', 'Region', 'Occupation', 'Income']
+            )
+
             prediction = model.predict(input_data)
 
             st.success(f"🎯 Prediction: {prediction[0]}")
 
         except Exception as e:
             st.error(f"Prediction error: {e}")
-    else:
-        st.warning("Model not loaded!")
+
+else:
+    st.warning("Model not loaded!")
