@@ -33,18 +33,18 @@ if model is not None:
     occupation = st.number_input("Occupation", value=0)
     income = st.number_input("Income", value=50000)
 
-    # Show modified occupation (for clarity)
-    st.write(f"👉 Occupation used in model: {occupation + 1000}")
+    # 👉 Show modified income
+    st.write(f"👉 Income used in model: {income + 10000}")
 
     # Prediction
     if st.button("Predict"):
         try:
-            # Modify occupation
-            occupation_modified = occupation + 1000
+            # ✅ Modify income
+            income_modified = income + 10000
 
             # Create dataframe
             input_data = pd.DataFrame(
-                [[age, gender, region, occupation_modified, income]],
+                [[age, gender, region, occupation, income_modified]],
                 columns=['Age', 'Gender', 'Region', 'Occupation', 'Income']
             )
 
